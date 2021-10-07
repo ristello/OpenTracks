@@ -86,14 +86,6 @@ public class TrackPointCreator {
         return sensorDataSet;
     }
 
-    public SensorDataSet fillAndReset(TrackPoint trackPoint) {
-        SensorDataSet sensorDataSet = fill(trackPoint);
-        resetSensorData();
-
-        return sensorDataSet;
-    }
-
-
     public void stop() {
         locationHandler.onStop();
 
@@ -120,9 +112,12 @@ public class TrackPointCreator {
     }
 
     public void onNewTrackPoint(TrackPoint trackPoint, Distance thresholdHorizontalAccuracy) {
-        fillAndReset(trackPoint);
+        fill(trackPoint);
 
-        service.newTrackPoint(trackPoint, thresholdHorizontalAccuracy);
+        boolean stored = service.newTrackPoint(trackPoint, thresholdHorizontalAccuracy);
+        if (stored) {
+            resetSensorData();
+        }
     }
 
     public TrackPoint createSegmentStartManual() {
@@ -131,7 +126,8 @@ public class TrackPointCreator {
 
     public TrackPoint createSegmentEnd() {
         TrackPoint segmentEnd = TrackPoint.createSegmentEndWithTime(createNow());
-        fillAndReset(segmentEnd);
+        fill(segmentEnd);
+        resetSensorData();
         return segmentEnd;
     }
 
@@ -189,7 +185,10 @@ public class TrackPointCreator {
     }
 
     public interface Callback {
-        void newTrackPoint(TrackPoint trackPoint, Distance thresholdHorizontalAccuracy);
+        /**
+         * @return Was TrackPoint stored (not discarded)?
+         */
+        boolean newTrackPoint(TrackPoint trackPoint, Distance thresholdHorizontalAccuracy);
 
         void newGpsStatus(GpsStatusValue gpsStatusValue);
     }
