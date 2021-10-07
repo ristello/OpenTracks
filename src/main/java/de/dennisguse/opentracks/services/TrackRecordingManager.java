@@ -40,7 +40,6 @@ class TrackRecordingManager {
     private boolean currentSegmentHasTrackPoint;
     private TrackPoint lastTrackPoint;
     private TrackPoint lastStoredTrackPoint;
-    private boolean isIdle;
 
     TrackRecordingManager(Context context) {
         this.context = context;
@@ -102,7 +101,6 @@ class TrackRecordingManager {
         lastTrackPoint = null;
         lastStoredTrackPoint = null;
         currentSegmentHasTrackPoint = false;
-        isIdle = false;
     }
 
     Pair<Track, Pair<TrackPoint, SensorDataSet>> get(TrackPointCreator trackPointCreator) {
@@ -165,31 +163,13 @@ class TrackRecordingManager {
             if (distanceToLastTrackLocation.greaterThan(maxRecordingDistance)) {
                 trackPoint.setType(TrackPoint.Type.SEGMENT_START_AUTOMATIC);
                 insertTrackPoint(trackId, trackPoint);
-
-                isIdle = false;
                 return true;
             }
 
-            if (trackPoint.hasSensorData() || distanceToLastTrackLocation.greaterOrEqualThan(recordingDistanceInterval)) {
+            if (trackPoint.hasSensorData() || (distanceToLastTrackLocation.greaterOrEqualThan(recordingDistanceInterval) && trackPoint.isMoving())) {
                 insertTrackPoint(trackId, trackPoint);
-
-                isIdle = false;
                 return true;
             }
-        }
-
-        if (!isIdle && !trackPoint.isMoving()) {
-            insertTrackPoint(trackId, trackPoint);
-
-            isIdle = true;
-            return true;
-        }
-
-        if (isIdle && trackPoint.isMoving()) {
-            insertTrackPoint(trackId, trackPoint);
-
-            isIdle = false;
-            return true;
         }
 
         Log.d(TAG, "Not recording TrackPoint, idle");
