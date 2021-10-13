@@ -3,7 +3,6 @@ package de.dennisguse.opentracks.io.file.importer;
 import android.app.job.JobService;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ResultReceiver;
@@ -22,7 +21,7 @@ import de.dennisguse.opentracks.content.data.Track;
 import de.dennisguse.opentracks.content.provider.ContentProviderUtils;
 import de.dennisguse.opentracks.io.file.TrackFileFormat;
 import de.dennisguse.opentracks.util.FileUtils;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 public class ImportService extends JobIntentService {
 
@@ -54,10 +53,9 @@ public class ImportService extends JobIntentService {
 
         String fileExtension = FileUtils.getExtension(file);
         try {
-            SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(this);
-            Distance maxRecordingDistance = PreferencesUtils.getMaxRecordingDistance(sharedPreferences, this);
-            Distance recordingDistanceInterval = PreferencesUtils.getRecordingDistanceInterval(sharedPreferences, this);
-            boolean preventReimport = PreferencesUtils.getPreventReimportTracks(sharedPreferences, this);
+            Distance maxRecordingDistance = PreferencesUtils.getMaxRecordingDistance();
+            Distance recordingDistanceInterval = PreferencesUtils.getRecordingDistanceInterval();
+            boolean preventReimport = PreferencesUtils.getPreventReimportTracks();
 
             TrackImporter trackImporter = new TrackImporter(this, new ContentProviderUtils(this), recordingDistanceInterval, maxRecordingDistance, preventReimport);
 

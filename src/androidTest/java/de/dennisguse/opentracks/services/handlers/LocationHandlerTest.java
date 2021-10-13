@@ -5,7 +5,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.location.Location;
 import android.os.Looper;
 
@@ -24,13 +23,12 @@ import java.time.Instant;
 
 import de.dennisguse.opentracks.content.data.Distance;
 import de.dennisguse.opentracks.content.data.TrackPoint;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 @RunWith(MockitoJUnitRunner.class)
 public class LocationHandlerTest {
 
     private final Context context = ApplicationProvider.getApplicationContext();
-    private final SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
 
     @Mock
     private TrackPointCreator trackPointCreator;
@@ -47,15 +45,12 @@ public class LocationHandlerTest {
     @Before
     public void setUp() {
         // Let's use default values.
-        sharedPreferences.edit().clear().commit();
+        PreferencesUtils.clear();
 
         Mockito.when(trackPointCreator.createNow())
                 .thenReturn(Instant.now());
 
-        //TODO REMOVE
-//        locationHandler.onSharedPreferenceChanged(context, sharedPreferences, context.getString(R.string.recording_gps_accuracy_key));
-//        locationHandler.onSharedPreferenceChanged(context, sharedPreferences, context.getString(R.string.min_recording_interval_key));
-        locationHandler.onStart(context, sharedPreferences);
+        locationHandler.onStart(context);
     }
 
     /**
@@ -92,7 +87,7 @@ public class LocationHandlerTest {
     @Test
     public void testOnLocationChanged_poorAccuracy() {
         // given
-        Distance prefAccuracy = PreferencesUtils.getThresholdHorizontalAccuracy(sharedPreferences, context);
+        Distance prefAccuracy = PreferencesUtils.getThresholdHorizontalAccuracy();
 
         // when
         locationHandler.onLocationChanged(createLocation(45f, 35f, (float) (prefAccuracy.toM() + 1), 5, System.currentTimeMillis()));

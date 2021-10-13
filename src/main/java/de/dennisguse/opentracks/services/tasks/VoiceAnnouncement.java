@@ -17,7 +17,6 @@
 package de.dennisguse.opentracks.services.tasks;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.speech.tts.TextToSpeech;
@@ -35,8 +34,7 @@ import de.dennisguse.opentracks.content.data.Track;
 import de.dennisguse.opentracks.content.provider.ContentProviderUtils;
 import de.dennisguse.opentracks.content.provider.TrackPointIterator;
 import de.dennisguse.opentracks.stats.TrackStatistics;
-import de.dennisguse.opentracks.util.AnnouncementUtils;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 import de.dennisguse.opentracks.viewmodels.IntervalStatistics;
 
 /**
@@ -103,8 +101,6 @@ public class VoiceAnnouncement {
         }
     };
 
-    private SharedPreferences sharedPreferences;
-
     private TextToSpeech tts;
     // Response from TTS after its initialization
     private int ttsInitStatus = TextToSpeech.ERROR;
@@ -121,8 +117,6 @@ public class VoiceAnnouncement {
 
     public void start() {
         Log.d(TAG, "Start");
-
-        sharedPreferences = PreferencesUtils.getSharedPreferences(context);
 
         if (tts == null) {
             tts = new TextToSpeech(context, status -> {
@@ -161,9 +155,9 @@ public class VoiceAnnouncement {
         }
 
 
-        boolean isMetricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, context);
-        boolean isReportSpeed = PreferencesUtils.isReportSpeed(sharedPreferences, context, track.getCategory());
-        Distance minGPSDistance = PreferencesUtils.getRecordingDistanceInterval(sharedPreferences, context);
+        boolean isMetricUnits = PreferencesUtils.isMetricUnits();
+        boolean isReportSpeed = PreferencesUtils.isReportSpeed(track.getCategory());
+        Distance minGPSDistance = PreferencesUtils.getRecordingDistanceInterval();
 
         //TODO Do not load all trackpoints for every announcement
         TrackPointIterator trackPointIterator = contentProviderUtils.getTrackPointLocationIterator(track.getId(), null);
@@ -187,8 +181,6 @@ public class VoiceAnnouncement {
             ttsFallback.release();
             ttsFallback = null;
         }
-
-        sharedPreferences = null;
     }
 
     private void onTtsReady() {
@@ -203,7 +195,7 @@ public class VoiceAnnouncement {
              */
         }
         tts.setLanguage(locale);
-        tts.setSpeechRate(PreferencesUtils.getVoiceSpeedRate(PreferencesUtils.getSharedPreferences(context), context));
+        tts.setSpeechRate(PreferencesUtils.getVoiceSpeedRate());
         tts.setOnUtteranceProgressListener(utteranceListener);
     }
 }

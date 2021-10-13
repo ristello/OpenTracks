@@ -3,6 +3,7 @@ package de.dennisguse.opentracks.util;
 import android.content.Context;
 import android.content.SharedPreferences;
 
+import androidx.preference.PreferenceManager;
 import androidx.test.core.app.ApplicationProvider;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
 
@@ -13,6 +14,7 @@ import de.dennisguse.opentracks.R;
 import de.dennisguse.opentracks.content.data.DataField;
 import de.dennisguse.opentracks.content.data.Layout;
 import de.dennisguse.opentracks.io.file.TrackFileFormat;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -27,14 +29,14 @@ public class PreferencesUtilsTest {
     @Test
     public void ExportTrackFileFormat_ok() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
 
         editor.putString(context.getString(R.string.export_trackfileformat_key), TrackFileFormat.KML_WITH_TRACKDETAIL_AND_SENSORDATA.name());
         editor.commit();
 
         // when
-        TrackFileFormat trackFileFormat = PreferencesUtils.getExportTrackFileFormat(sharedPreferences, context);
+        TrackFileFormat trackFileFormat = PreferencesUtils.getExportTrackFileFormat();
 
         // then
         assertEquals(TrackFileFormat.KML_WITH_TRACKDETAIL_AND_SENSORDATA, trackFileFormat);
@@ -43,13 +45,13 @@ public class PreferencesUtilsTest {
     @Test
     public void ExportTrackFileFormat_invalid() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(context.getString(R.string.export_trackfileformat_key), "invalid");
         editor.commit();
 
         // when
-        TrackFileFormat trackFileFormat = PreferencesUtils.getExportTrackFileFormat(sharedPreferences, context);
+        TrackFileFormat trackFileFormat = PreferencesUtils.getExportTrackFileFormat();
 
         // then
         assertEquals(TrackFileFormat.KMZ_WITH_TRACKDETAIL_AND_SENSORDATA, trackFileFormat);
@@ -58,13 +60,13 @@ public class PreferencesUtilsTest {
     @Test
     public void ExportTrackFileFormat_noValue() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.commit();
 
         // when
-        TrackFileFormat trackFileFormat = PreferencesUtils.getExportTrackFileFormat(sharedPreferences, context);
+        TrackFileFormat trackFileFormat = PreferencesUtils.getExportTrackFileFormat();
 
         // then
         assertEquals(TrackFileFormat.KMZ_WITH_TRACKDETAIL_AND_SENSORDATA, trackFileFormat);
@@ -73,13 +75,13 @@ public class PreferencesUtilsTest {
     @Test
     public void testGetCustomLayout_default() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.clear();
         editor.commit();
 
         // when
-        Layout layout = PreferencesUtils.getCustomLayout(sharedPreferences, context);
+        Layout layout = PreferencesUtils.getCustomLayout();
 
         // then
         assertTrue(layout.getFields().size() > 0);
@@ -90,7 +92,7 @@ public class PreferencesUtilsTest {
     @Test
     public void testGetCustomLayout_1() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(
                 context.getString(R.string.stats_custom_layout_fields_key),
@@ -102,7 +104,7 @@ public class PreferencesUtilsTest {
         editor.apply();
 
         // when
-        Layout layout = PreferencesUtils.getCustomLayout(sharedPreferences, context);
+        Layout layout = PreferencesUtils.getCustomLayout();
 
         // then
         assertEquals(layout.getFields().size(), 4);
@@ -128,7 +130,7 @@ public class PreferencesUtilsTest {
     @Test
     public void testGetCustomLayout_coordinatesIsWide() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(
                 context.getString(R.string.stats_custom_layout_fields_key),
@@ -140,7 +142,7 @@ public class PreferencesUtilsTest {
         editor.apply();
 
         // when
-        Layout layout = PreferencesUtils.getCustomLayout(sharedPreferences, context);
+        Layout layout = PreferencesUtils.getCustomLayout();
 
         // then
         assertEquals(layout.getFields().size(), 4);
@@ -167,7 +169,7 @@ public class PreferencesUtilsTest {
     @Test
     public void testSetCustomLayout() {
         // given
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
+        SharedPreferences sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context);
         Layout layoutSrc = new Layout("road cycling");
         layoutSrc.addField(new DataField(context.getString(R.string.stats_custom_layout_moving_time_key), context.getString(R.string.stats_moving_time), true, true, false));
         layoutSrc.addField(new DataField(context.getString(R.string.stats_custom_layout_distance_key), context.getString(R.string.stats_distance), true, false, false));
@@ -175,7 +177,7 @@ public class PreferencesUtilsTest {
         layoutSrc.addField(new DataField(context.getString(R.string.stats_custom_layout_speed_key), context.getString(R.string.stats_speed), false, false, false));
 
         // when
-        PreferencesUtils.setCustomLayout(sharedPreferences, context, layoutSrc);
+        PreferencesUtils.setCustomLayout(layoutSrc);
 
         // then
         String csv = sharedPreferences.getString(context.getString(R.string.stats_custom_layout_fields_key), null);
@@ -187,7 +189,7 @@ public class PreferencesUtilsTest {
                 + context.getString(R.string.stats_custom_layout_average_moving_speed_key) + ",0,1;"
                 + context.getString(R.string.stats_custom_layout_speed_key) + ",0,0;");
 
-        Layout layoutDst = PreferencesUtils.getCustomLayout(sharedPreferences, context);
+        Layout layoutDst = PreferencesUtils.getCustomLayout();
         assertEquals(layoutSrc.getProfile(), layoutDst.getProfile());
         assertEquals(layoutSrc.getFields().size(), layoutDst.getFields().size());
         for (int i = 0; i < layoutSrc.getFields().size(); i++) {

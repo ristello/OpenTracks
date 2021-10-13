@@ -31,10 +31,8 @@ import de.dennisguse.opentracks.settings.bluetooth.BluetoothLeCyclingPowerPrefer
 import de.dennisguse.opentracks.settings.bluetooth.BluetoothLeHeartRatePreference;
 import de.dennisguse.opentracks.settings.bluetooth.BluetoothLeRunningSpeedAndCadencePreference;
 import de.dennisguse.opentracks.settings.bluetooth.BluetoothLeSensorPreference;
-import de.dennisguse.opentracks.util.ActivityUtils;
 import de.dennisguse.opentracks.util.BluetoothUtils;
 import de.dennisguse.opentracks.util.HackUtils;
-import de.dennisguse.opentracks.util.PreferencesUtils;
 import de.dennisguse.opentracks.util.StringUtils;
 
 public class SettingsActivity extends AbstractActivity implements ChooseActivityTypeDialogFragment.ChooseActivityTypeCaller, ResetDialogPreference.ResetCallback {
@@ -96,14 +94,12 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
 
     public static class PrefsFragment extends PreferenceFragmentCompat {
 
-        private SharedPreferences sharedPreferences;
-
         private final SharedPreferences.OnSharedPreferenceChangeListener sharedPreferenceChangeListener = (sharedPreferences, key) -> {
-            if (PreferencesUtils.isKey(getActivity(), R.string.stats_units_key, key)) {
+            if (PreferencesUtils.isKey(R.string.stats_units_key, key)) {
                 getActivity().runOnUiThread(this::updateUnits);
             }
-            if (PreferencesUtils.isKey(getActivity(), R.string.night_mode_key, key)) {
-                getActivity().runOnUiThread(() -> ActivityUtils.applyNightMode(sharedPreferences, getContext()));
+            if (PreferencesUtils.isKey(R.string.night_mode_key, key)) {
+                getActivity().runOnUiThread(PreferencesUtils::applyNightMode);
             }
         };
 
@@ -130,8 +126,6 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
 
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
-            sharedPreferences = PreferencesUtils.getSharedPreferences(getContext());
-
             trackRecordingServiceConnection = new TrackRecordingServiceConnection(bindServiceCallback);
 
             try {
@@ -149,7 +143,7 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
 
             Preference instantExportDirectoryPreference = findPreference(getString(R.string.settings_default_export_directory_key));
             instantExportDirectoryPreference.setSummaryProvider(preference -> {
-                DocumentFile directory = PreferencesUtils.getDefaultExportDirectoryUri(sharedPreferences, getContext());
+                DocumentFile directory = PreferencesUtils.getDefaultExportDirectoryUri(getContext());
                 //Use same value for not set as Androidx ListPreference and EditTextPreference
                 return directory != null ? directory.getName() : getString(R.string.not_set);
             });
@@ -157,31 +151,31 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
             findPreference(getString(R.string.recording_distance_interval_key))
                     .setSummaryProvider(
                             preference -> {
-                                boolean metricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, getActivity());
-                                Distance distance = PreferencesUtils.getRecordingDistanceInterval(sharedPreferences, getContext());
+                                boolean metricUnits = PreferencesUtils.isMetricUnits();
+                                Distance distance = PreferencesUtils.getRecordingDistanceInterval();
                                 return getString(R.string.settings_recording_location_frequency_summary, StringUtils.formatDistance(getContext(), distance, metricUnits));
                             }
                     );
             findPreference(getString(R.string.max_recording_distance_key))
                     .setSummaryProvider(
                             preference -> {
-                                boolean metricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, getActivity());
-                                Distance distance = PreferencesUtils.getMaxRecordingDistance(sharedPreferences, getContext());
+                                boolean metricUnits = PreferencesUtils.isMetricUnits();
+                                Distance distance = PreferencesUtils.getMaxRecordingDistance();
                                 return getString(R.string.settings_recording_max_recording_distance_summary, StringUtils.formatDistance(getContext(), distance, metricUnits));
                             }
                     );
             findPreference(getString(R.string.recording_gps_accuracy_key))
                     .setSummaryProvider(
                             preference -> {
-                                boolean metricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, getActivity());
-                                Distance distance = PreferencesUtils.getThresholdHorizontalAccuracy(sharedPreferences, getContext());
+                                boolean metricUnits = PreferencesUtils.isMetricUnits();
+                                Distance distance = PreferencesUtils.getThresholdHorizontalAccuracy();
                                 return getString(R.string.settings_recording_min_required_accuracy_summary, StringUtils.formatDistance(getContext(), distance, metricUnits));
                             }
                     );
             findPreference(getString(R.string.min_recording_interval_key))
                     .setSummaryProvider(
                             preference -> {
-                                Duration interval = PreferencesUtils.getMinRecordingInterval(sharedPreferences, getContext());
+                                Duration interval = PreferencesUtils.getMinRecordingInterval();
                                 return getString(R.string.settings_recording_location_frequency_summary, getString(R.string.value_integer_second, interval.getSeconds()));
                             }
                     );
@@ -200,8 +194,7 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
 
             trackRecordingServiceConnection.bind(getContext());
 
-            sharedPreferences.registerOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
-            sharedPreferenceChangeListener.onSharedPreferenceChanged(sharedPreferences, null);
+            PreferencesUtils.registerOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
 
             updateUnits();
             updatePrefsDependOnRecording();
@@ -211,13 +204,13 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
 
         private void updatePostWorkoutExport() {
             Preference instantExportEnabledPreference = findPreference(getString(R.string.post_workout_export_enabled_key));
-            instantExportEnabledPreference.setEnabled(PreferencesUtils.isDefaultExportDirectoryUri(sharedPreferences, getContext()));
+            instantExportEnabledPreference.setEnabled(PreferencesUtils.isDefaultExportDirectoryUri(getContext()));
         }
 
         @Override
         public void onPause() {
             super.onPause();
-            sharedPreferences.unregisterOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
+            PreferencesUtils.unregisterOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
         }
 
         @Override
@@ -251,7 +244,6 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
         public void onDestroy() {
             super.onDestroy();
             trackRecordingServiceConnection.unbind(getContext());
-            sharedPreferences = null;
         }
 
         public void setDefaultActivity(String iconValue) {
@@ -282,25 +274,25 @@ public class SettingsActivity extends AbstractActivity implements ChooseActivity
         }
 
         private void updateUnits() {
-            boolean metricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, getActivity());
+            boolean metricUnits = PreferencesUtils.isMetricUnits();
 
             ListPreference voiceFrequency = findPreference(getString(R.string.voice_announcement_frequency_key));
-            voiceFrequency.setEntries(StringUtils.getAnnouncementFrequency(getActivity()));
+            voiceFrequency.setEntries(PreferencesUtils.getVoiceAnnouncementFrequencyEntries());
 
             ListPreference voiceDistance = findPreference(getString(R.string.voice_announcement_distance_key));
-            voiceDistance.setEntries(StringUtils.getAnnouncementDistance(getActivity(), metricUnits));
+            voiceDistance.setEntries(PreferencesUtils.getVoiceAnnouncementDistanceEntries());
 
             ListPreference minRecordingInterval = findPreference(getString(R.string.min_recording_interval_key));
-            minRecordingInterval.setEntries(PreferenceHelper.getMinRecordingIntervalEntries(getActivity()));
+            minRecordingInterval.setEntries(PreferencesUtils.getMinRecordingIntervalEntries());
 
             ListPreference recordingDistanceInterval = findPreference(getString(R.string.recording_distance_interval_key));
-            recordingDistanceInterval.setEntries(PreferenceHelper.getRecordingDistanceIntervalEntries(getActivity(), metricUnits));
+            recordingDistanceInterval.setEntries(PreferencesUtils.getRecordingDistanceIntervalEntries());
 
             ListPreference maxRecordingDistance = findPreference(getString(R.string.max_recording_distance_key));
-            maxRecordingDistance.setEntries(PreferenceHelper.getMaxRecordingDistanceEntries(getActivity(), metricUnits));
+            maxRecordingDistance.setEntries(PreferencesUtils.getMaxRecordingDistanceEntries());
 
             ListPreference recordingGpsAccuracy = findPreference(getString(R.string.recording_gps_accuracy_key));
-            recordingGpsAccuracy.setEntries(PreferenceHelper.getRecordingGpsAccuracyEntries(getActivity(), metricUnits));
+            recordingGpsAccuracy.setEntries(PreferencesUtils.getThresholdHorizontalAccuracyEntries());
 
             ListPreference statsRatePreferences = findPreference(getString(R.string.stats_rate_key));
             String[] entries = getResources().getStringArray(metricUnits ? R.array.stats_rate_metric_options : R.array.stats_rate_imperial_options);

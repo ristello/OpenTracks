@@ -1,7 +1,6 @@
 package de.dennisguse.opentracks;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 
 import androidx.annotation.NonNull;
 
@@ -9,7 +8,7 @@ import org.junit.rules.TestRule;
 import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 public class PreferenceMetricUnitRule implements TestRule {
     private final Context context;
@@ -25,14 +24,13 @@ public class PreferenceMetricUnitRule implements TestRule {
         return new Statement() {
             @Override
             public void evaluate() throws Throwable {
-                SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
-                final boolean previousMetricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, context);
+                final boolean previousMetricUnits = PreferencesUtils.isMetricUnits();
 
                 try {
-                    PreferencesUtils.setMetricUnits(sharedPreferences, context, metricUnits);
+                    PreferencesUtils.setMetricUnits(metricUnits);
                     base.evaluate();
                 } finally {
-                    PreferencesUtils.setMetricUnits(sharedPreferences, context, previousMetricUnits);
+                    PreferencesUtils.setMetricUnits(previousMetricUnits);
                 }
             }
         };

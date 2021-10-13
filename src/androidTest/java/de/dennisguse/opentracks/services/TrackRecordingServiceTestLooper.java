@@ -32,7 +32,7 @@ import de.dennisguse.opentracks.content.data.TrackPoint;
 import de.dennisguse.opentracks.content.provider.ContentProviderUtils;
 import de.dennisguse.opentracks.content.provider.CustomContentProvider;
 import de.dennisguse.opentracks.stats.TrackStatistics;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -51,7 +51,6 @@ public class TrackRecordingServiceTestLooper {
     public final ServiceTestRule mServiceRule = ServiceTestRule.withTimeout(5, TimeUnit.SECONDS);
 
     private final Context context = ApplicationProvider.getApplicationContext();
-    private final SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
 
     private ContentProviderUtils contentProviderUtils;
 
@@ -76,7 +75,7 @@ public class TrackRecordingServiceTestLooper {
         contentProviderUtils = new ContentProviderUtils(context);
 
         // Let's use default values.
-        sharedPreferences.edit().clear().apply();
+        PreferencesUtils.clear();
 
         // Ensure that the database is empty before every test
         contentProviderUtils.deleteAllTracks(context);
@@ -143,14 +142,14 @@ public class TrackRecordingServiceTestLooper {
     @MediumTest
     @Test
     public void testWithProperties_metricUnitsDefault() throws TimeoutException {
-        PreferencesUtils.setString(sharedPreferences, context, R.string.stats_units_key, context.getString(R.string.stats_units_default));
+        PreferencesUtils.setString(R.string.stats_units_key, context.getString(R.string.stats_units_default));
         fullRecordingSession();
     }
 
     @MediumTest
     @Test
     public void testWithProperties_metricUnitsDisabled() throws TimeoutException {
-        PreferencesUtils.setString(sharedPreferences, context, R.string.stats_units_key, context.getString(R.string.stats_units_imperial));
+        PreferencesUtils.setString(R.string.stats_units_key, context.getString(R.string.stats_units_imperial));
         fullRecordingSession();
     }
 
@@ -212,7 +211,7 @@ public class TrackRecordingServiceTestLooper {
                     .setSpeed(Speed.of(10))
                     .setBearing(3.0f);
 
-            Distance prefAccuracy = PreferencesUtils.getThresholdHorizontalAccuracy(sharedPreferences, context);
+            Distance prefAccuracy = PreferencesUtils.getThresholdHorizontalAccuracy();
             service.getTrackPointCreator().onNewTrackPoint(trackPoint, prefAccuracy);
 
             if (i % 7 == 0) {

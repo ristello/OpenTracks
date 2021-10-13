@@ -3,7 +3,6 @@ package de.dennisguse.opentracks.util;
 import android.content.ClipData;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 
 import androidx.annotation.NonNull;
@@ -17,6 +16,7 @@ import de.dennisguse.opentracks.content.data.Track;
 import de.dennisguse.opentracks.content.data.TrackPointsColumns;
 import de.dennisguse.opentracks.content.data.TracksColumns;
 import de.dennisguse.opentracks.content.provider.ContentProviderUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 /**
  * Create an {@link Intent} to request showing a Dashboard.
@@ -74,13 +74,11 @@ public class IntentDashboardUtils {
 
         intent.putParcelableArrayListExtra(ACTION_DASHBOARD_PAYLOAD, uris);
 
-        SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
-
-        intent.putExtra(EXTRAS_SHOULD_KEEP_SCREEN_ON, PreferencesUtils.shouldKeepScreenOn(sharedPreferences, context));
-        intent.putExtra(EXTRAS_SHOW_WHEN_LOCKED, PreferencesUtils.shouldShowStatsOnLockscreen(sharedPreferences, context));
+        intent.putExtra(EXTRAS_SHOULD_KEEP_SCREEN_ON, PreferencesUtils.shouldKeepScreenOn());
+        intent.putExtra(EXTRAS_SHOW_WHEN_LOCKED, PreferencesUtils.shouldShowStatsOnLockscreen());
         intent.putExtra(EXTRAS_OPENTRACKS_IS_RECORDING_THIS_TRACK, isRecording);
         if (isRecording) {
-            intent.putExtra(EXTRAS_SHOW_FULLSCREEN, PreferencesUtils.shouldUseFullscreen(sharedPreferences, context));
+            intent.putExtra(EXTRAS_SHOW_FULLSCREEN, PreferencesUtils.shouldUseFullscreen());
         }
 
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);

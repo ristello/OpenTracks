@@ -17,7 +17,6 @@
 package de.dennisguse.opentracks.settings;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.view.View;
@@ -31,7 +30,6 @@ import androidx.preference.PreferenceDialogFragmentCompat;
 import de.dennisguse.opentracks.R;
 import de.dennisguse.opentracks.fragments.ChooseActivityTypeDialogFragment;
 import de.dennisguse.opentracks.util.HackUtils;
-import de.dennisguse.opentracks.util.PreferencesUtils;
 import de.dennisguse.opentracks.util.TrackIconUtils;
 
 /**
@@ -49,7 +47,7 @@ public class ActivityTypePreference extends DialogPreference {
         setDialogIcon(null);
         setPersistent(true);
 
-        SummaryProvider<DialogPreference> summaryProvider = preference -> PreferencesUtils.getDefaultActivity(PreferencesUtils.getSharedPreferences(context), ActivityTypePreference.this.getContext());
+        SummaryProvider<DialogPreference> summaryProvider = preference -> PreferencesUtils.getDefaultActivity();
         setSummaryProvider(summaryProvider);
     }
 
@@ -60,8 +58,6 @@ public class ActivityTypePreference extends DialogPreference {
     }
 
     public static class ActivityPreferenceDialog extends PreferenceDialogFragmentCompat {
-
-        private SharedPreferences sharedPreferences;
 
         private AutoCompleteTextView textView;
         private ImageView iconView;
@@ -80,11 +76,9 @@ public class ActivityTypePreference extends DialogPreference {
             super.onBindDialogView(view);
 
             final Context context = getActivity();
-            sharedPreferences = PreferencesUtils.getSharedPreferences(context);
-
 
             textView = view.findViewById(R.id.activity_type_preference_text_view);
-            String category = PreferencesUtils.getDefaultActivity(sharedPreferences, context);
+            String category = PreferencesUtils.getDefaultActivity();
             textView.setText(category);
             ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(context, R.array.activity_types, android.R.layout.simple_dropdown_item_1line);
             textView.setAdapter(adapter);
@@ -105,14 +99,8 @@ public class ActivityTypePreference extends DialogPreference {
             updateIcon(TrackIconUtils.getIconValue(context, category));
         }
 
-        @Override
-        public void onDestroy() {
-            super.onDestroy();
-            sharedPreferences = null;
-        }
-
         private void showIconSelectDialog() {
-            String category = PreferencesUtils.getDefaultActivity(sharedPreferences, getActivity());
+            String category = PreferencesUtils.getDefaultActivity();
             ChooseActivityTypeDialogFragment.showDialog(getActivity().getSupportFragmentManager(), category);
         }
 
@@ -121,7 +109,7 @@ public class ActivityTypePreference extends DialogPreference {
             if (positiveResult) {
                 String newDefaultActivity = textView.getText().toString();
                 if (getPreference().callChangeListener(newDefaultActivity)) {
-                    PreferencesUtils.setDefaultActivity(sharedPreferences, getActivity(), newDefaultActivity);
+                    PreferencesUtils.setDefaultActivity(newDefaultActivity);
                     HackUtils.invalidatePreference(getPreference());
                 }
             }

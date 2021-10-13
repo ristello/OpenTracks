@@ -14,7 +14,7 @@ import java.io.OutputStream;
 import de.dennisguse.opentracks.content.data.Track;
 import de.dennisguse.opentracks.databinding.TrackSharePictureBinding;
 import de.dennisguse.opentracks.stats.TrackStatistics;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 import de.dennisguse.opentracks.util.StringUtils;
 
 /**
@@ -61,7 +61,7 @@ public class SharePictureTrackExporter implements TrackExporter {
         TrackSharePictureBinding viewBinding = TrackSharePictureBinding.inflate(LayoutInflater.from(context));
         viewBinding.sharePictureCategory.setText(track.getCategory());
 
-        boolean metricUnits = PreferencesUtils.isMetricUnits(PreferencesUtils.getSharedPreferences(context), context);
+        boolean metricUnits = PreferencesUtils.isMetricUnits();
         TrackStatistics trackStatistics = track.getTrackStatistics();
 
         viewBinding.sharePictureTotalTime.setText(StringUtils.formatElapsedTimeWithHour(track.getTrackStatistics().getTotalTime()));

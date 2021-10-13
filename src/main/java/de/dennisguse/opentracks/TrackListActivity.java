@@ -21,7 +21,6 @@ import android.app.ActivityOptions;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -64,7 +63,7 @@ import de.dennisguse.opentracks.util.ActivityUtils;
 import de.dennisguse.opentracks.util.IntentDashboardUtils;
 import de.dennisguse.opentracks.util.IntentUtils;
 import de.dennisguse.opentracks.util.ListItemUtils;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 import de.dennisguse.opentracks.util.StringUtils;
 import de.dennisguse.opentracks.util.TrackIconUtils;
 
@@ -78,7 +77,6 @@ public class TrackListActivity extends AbstractTrackDeleteActivity implements Co
     private static final String TAG = TrackListActivity.class.getSimpleName();
 
     // The following are setFrequency in onCreate
-    private SharedPreferences sharedPreferences;
     private TrackRecordingServiceConnection trackRecordingServiceConnection;
     private ResourceCursorAdapter resourceCursorAdapter;
 
@@ -110,8 +108,8 @@ public class TrackListActivity extends AbstractTrackDeleteActivity implements Co
     };
 
     private final OnSharedPreferenceChangeListener sharedPreferenceChangeListener = (sharedPreferences, key) -> {
-        if (PreferencesUtils.isKey(TrackListActivity.this, R.string.stats_units_key, key)) {
-            metricUnits = PreferencesUtils.isMetricUnits(sharedPreferences, TrackListActivity.this);
+        if (PreferencesUtils.isKey(R.string.stats_units_key, key)) {
+            metricUnits = PreferencesUtils.isMetricUnits();
         }
         if (key != null) {
             runOnUiThread(() -> {
@@ -160,8 +158,6 @@ public class TrackListActivity extends AbstractTrackDeleteActivity implements Co
 
         super.onCreate(savedInstanceState);
         setDefaultKeyMode(DEFAULT_KEYS_SEARCH_LOCAL);
-
-        sharedPreferences = PreferencesUtils.getSharedPreferences(this);
 
         trackRecordingServiceConnection = new TrackRecordingServiceConnection(bindChangedCallback);
 
@@ -231,8 +227,7 @@ public class TrackListActivity extends AbstractTrackDeleteActivity implements Co
     protected void onStart() {
         super.onStart();
 
-        sharedPreferences.registerOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
-        sharedPreferenceChangeListener.onSharedPreferenceChanged(sharedPreferences, null);
+        PreferencesUtils.registerOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
         trackRecordingServiceConnection.startConnection(this);
     }
 
@@ -249,7 +244,7 @@ public class TrackListActivity extends AbstractTrackDeleteActivity implements Co
     protected void onStop() {
         super.onStop();
 
-        sharedPreferences.unregisterOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
+        PreferencesUtils.unregisterOnSharedPreferenceChangeListener(sharedPreferenceChangeListener);
         trackRecordingServiceConnection.unbind(this);
     }
 

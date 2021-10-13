@@ -1,7 +1,6 @@
 package de.dennisguse.opentracks.adapters;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import de.dennisguse.opentracks.R;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 import de.dennisguse.opentracks.util.StringUtils;
 import de.dennisguse.opentracks.util.TrackIconUtils;
 import de.dennisguse.opentracks.viewmodels.AggregatedStatistics;
@@ -58,7 +57,7 @@ public class AggregatedStatisticsAdapter extends BaseAdapter {
             viewHolder = (ViewHolder) convertView.getTag();
         }
 
-        if (TrackIconUtils.isSpeedIcon(context, aggregatedStatistic.getCategory())) {
+        if (TrackIconUtils.isSpeedIcon(context.getResources(), aggregatedStatistic.getCategory())) {
             viewHolder.setSpeed(aggregatedStatistic);
         } else {
             viewHolder.setPace(aggregatedStatistic);
@@ -139,9 +138,8 @@ public class AggregatedStatisticsAdapter extends BaseAdapter {
         private void setCommonValues(AggregatedStatistics.AggregatedStatistic aggregatedStatistic) {
             String category = aggregatedStatistic.getCategory();
 
-            SharedPreferences sharedPreferences = PreferencesUtils.getSharedPreferences(context);
-            reportSpeed = PreferencesUtils.isReportSpeed(sharedPreferences, context, category);
-            metricsUnits = PreferencesUtils.isMetricUnits(sharedPreferences, context);
+            reportSpeed = PreferencesUtils.isReportSpeed(category);
+            metricsUnits = PreferencesUtils.isMetricUnits();
 
             sportIcon.setImageResource(getIcon(aggregatedStatistic));
             typeLabel.setText(category);

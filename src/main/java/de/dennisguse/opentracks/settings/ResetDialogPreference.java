@@ -10,7 +10,6 @@ import androidx.preference.DialogPreference;
 import androidx.preference.PreferenceDialogFragmentCompat;
 
 import de.dennisguse.opentracks.R;
-import de.dennisguse.opentracks.util.PreferencesUtils;
 
 public class ResetDialogPreference extends DialogPreference {
 
@@ -46,7 +45,7 @@ public class ResetDialogPreference extends DialogPreference {
                 PreferencesUtils.resetPreferences(activity, true);
                 Toast.makeText(activity, R.string.settings_reset_done, Toast.LENGTH_SHORT).show();
             } else if (preferenceKey.equals(getString(R.string.settings_layout_reset_key))) {
-                PreferencesUtils.resetCustomLayoutPreferences(activity);
+                PreferencesUtils.resetCustomLayoutPreferences();
                 Toast.makeText(activity, R.string.settings_layout_reset_done, Toast.LENGTH_SHORT).show();
             }
 

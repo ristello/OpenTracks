@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 import de.dennisguse.opentracks.R;
 import de.dennisguse.opentracks.settings.BluetoothLeAdapter;
 import de.dennisguse.opentracks.util.BluetoothUtils;
-import de.dennisguse.opentracks.util.PreferencesUtils;
+import de.dennisguse.opentracks.settings.PreferencesUtils;
 
 /**
  * Preference to select a discoverable Bluetooth LE device.
@@ -91,7 +91,7 @@ public abstract class BluetoothLeSensorPreference extends DialogPreference {
 
     @Override
     public CharSequence getSummary() {
-        if (getValue() == null || PreferencesUtils.isBluetoothSensorAddressNone(getContext(), getValue())) {
+        if (getValue() == null || PreferencesUtils.isBluetoothSensorAddressNone(getValue())) {
             return getContext().getString(DEVICE_NONE_RESOURCEID);
         }
 
