@@ -73,9 +73,9 @@ public class TrackPointAssert {
             Assert.assertEquals(expected.getPower(), actual.getPower(), delta);
         }
 
-        Assert.assertEquals(expected.hasCyclingCadence(), actual.hasCyclingCadence());
-        if (expected.hasCyclingCadence()) {
-            Assert.assertEquals(expected.getCyclingCadence_rpm(), actual.getCyclingCadence_rpm(), delta);
+        Assert.assertEquals(expected.hasCadence(), actual.hasCadence());
+        if (expected.hasCadence()) {
+            Assert.assertEquals(expected.getCadence_rpm(), actual.getCadence_rpm(), delta);
         }
     }
 
@@ -83,14 +83,14 @@ public class TrackPointAssert {
         try {
             Assert.assertEquals(expected.size(), actual.size());
         } catch (AssertionError e) {
-            throw new AssertionError("Expected: " + expected + " actual: " + actual);
+            throw new AssertionError("Expected: " + expected + "\n actual: " + actual);
         }
 
         for (int i = 0; i < expected.size(); i++) {
             try {
                 assertEquals(expected.get(i), actual.get(i));
             } catch (AssertionError e) {
-                throw new AssertionError("Expected: " + expected.get(i) + " actual: " + actual.get(i), e);
+                throw new AssertionError("Expected: " + expected.get(i) + "\n actual: " + actual.get(i), e);
             }
         }
         Assert.assertEquals(expected.size(), actual.size());

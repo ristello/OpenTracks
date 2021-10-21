@@ -70,6 +70,10 @@ public class GpxTrackImporter extends DefaultHandler implements XMLImporter.Trac
     private static final String ATTRIBUTE_LON = "lon";
 
     private static final String TAG_EXTENSION_SPEED = "gpxtpx:speed";
+    /**
+     * Often speed is exported without the proper namespace.
+     */
+    private static final String TAG_EXTENSION_SPEED_COMPAT = "speed";
     private static final String TAG_EXTENSION_HEARTRATE = "gpxtpx:hr";
     private static final String TAG_EXTENSION_CADENCE = "gpxtpx:cad";
     private static final String TAG_EXTENSION_POWER = "pwr:PowerInWatts";
@@ -192,6 +196,7 @@ public class GpxTrackImporter extends DefaultHandler implements XMLImporter.Trac
                 }
                 break;
             case TAG_EXTENSION_SPEED:
+            case TAG_EXTENSION_SPEED_COMPAT:
                 if (content != null) {
                     speed = content.trim();
                 }
@@ -295,7 +300,7 @@ public class GpxTrackImporter extends DefaultHandler implements XMLImporter.Trac
 
         if (cadence != null) {
             try {
-                trackPoint.setCyclingCadence_rpm(Float.parseFloat(cadence));
+                trackPoint.setCadence_rpm(Float.parseFloat(cadence));
             } catch (Exception e) {
                 throw new ParsingException(createErrorMessage(String.format(Locale.US, "Unable to parse cadence: %s", cadence)), e);
             }

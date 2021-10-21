@@ -36,9 +36,9 @@ class TrackRecordingManager {
     private Track.Id trackId;
     private TrackStatisticsUpdater trackStatisticsUpdater;
 
+    private boolean currentSegmentHasTrackPoint;
     private TrackPoint lastTrackPoint;
-    private TrackPoint lastValidTrackPoint;
-    private boolean isIdle;
+    private TrackPoint lastStoredTrackPoint;
 
     TrackRecordingManager(Context context) {
         this.context = context;
@@ -64,6 +64,8 @@ class TrackRecordingManager {
         track.setTrackStatistics(trackStatisticsUpdater.getTrackStatistics());
         contentProviderUtils.updateTrack(track);
 
+        currentSegmentHasTrackPoint = false;
+
         return trackId;
     }
 
@@ -78,40 +80,38 @@ class TrackRecordingManager {
 
         trackStatisticsUpdater = new TrackStatisticsUpdater(track.getTrackStatistics());
         insertTrackPoint(trackId, segmentStartTrackPoint);
-    }
+        currentSegmentHasTrackPoint = false;
+        lastTrackPoint = null;
+        lastStoredTrackPoint = null;    }
 
     void pause(TrackPointCreator trackPointCreator) {
-        if (lastTrackPoint != null) {
-            insertTrackPointIfNewer(trackId, lastTrackPoint);
-        }
         insertTrackPoint(trackId, trackPointCreator.createSegmentEnd());
+        currentSegmentHasTrackPoint = false;
+        lastTrackPoint = null;
+        lastStoredTrackPoint = null;
     }
 
     void end(TrackPointCreator trackPointCreator) {
-        if (lastTrackPoint != null) {
-            insertTrackPointIfNewer(trackId, lastTrackPoint);
-        }
-
         TrackPoint segmentEnd = trackPointCreator.createSegmentEnd();
         insertTrackPoint(trackId, segmentEnd);
 
         trackId = null;
         trackStatisticsUpdater = null;
         lastTrackPoint = null;
-        lastValidTrackPoint = null;
-        isIdle = false;
+        lastStoredTrackPoint = null;
+        currentSegmentHasTrackPoint = false;
     }
 
     Pair<Track, Pair<TrackPoint, SensorDataSet>> get(TrackPointCreator trackPointCreator) {
         if (trackPointCreator == null) {
             return null;
         }
-        TrackStatisticsUpdater tmpTrackStatisticsUpdater = getTrackStatisticsUpdater();
+        TrackStatisticsUpdater tmpTrackStatisticsUpdater = new TrackStatisticsUpdater(trackStatisticsUpdater);
         Pair<TrackPoint, SensorDataSet> current = trackPointCreator.createCurrentTrackPoint(lastTrackPoint);
 
         tmpTrackStatisticsUpdater.addTrackPoint(current.first, recordingDistanceInterval);
 
-        Track track = getTrack(); //Get copy
+        Track track = contentProviderUtils.getTrack(trackId); //Get copy
         if (track == null) {
             Log.w(TAG, "Requesting data if not recording is taking place, should not be done.");
             return null;
@@ -131,8 +131,7 @@ class TrackRecordingManager {
             name = context.getString(R.string.marker_name_format, nextMarkerNumber + 1);
         }
 
-        TrackPoint trackPoint = getLastValidTrackPointInCurrentSegment(trackId);
-        if (trackPoint == null) {
+        if (lastStoredTrackPoint == null) {
             Log.i(TAG, "Could not create a marker as trackPoint is unknown.");
             return null;
         }
@@ -142,131 +141,68 @@ class TrackRecordingManager {
         String icon = context.getString(R.string.marker_icon_url);
         photoUrl = photoUrl != null ? photoUrl : "";
 
-
         // Insert marker
-        Marker marker = new Marker(name, description, category, icon, trackId, getTrackStatistics(), trackPoint, photoUrl);
+        Marker marker = new Marker(name, description, category, icon, trackId, getTrackStatistics(), lastStoredTrackPoint, photoUrl);
         Uri uri = contentProviderUtils.insertMarker(marker);
         return new Marker.Id(ContentUris.parseId(uri));
     }
 
-    void onNewTrackPoint(TrackPoint trackPoint, Distance thresholdHorizontalAccuracy) {
-        //TODO Figure out how to avoid loading the lastValidTrackPoint from the database
-        TrackPoint lastValidTrackPoint = getLastValidTrackPointInCurrentSegment(trackId);
-
+    boolean onNewTrackPoint(TrackPoint trackPoint) {
         //Storing trackPoint
 
         // Always insert the first segment location
-        if (!currentSegmentHasTrackPoint()) {
+        if (!currentSegmentHasTrackPoint) {
             insertTrackPoint(trackId, trackPoint);
-            lastTrackPoint = trackPoint;
-            return;
+            currentSegmentHasTrackPoint = true;
+            return true;
         }
 
-        Distance distanceToLastTrackLocation = trackPoint.distanceToPrevious(lastValidTrackPoint);
+        Distance distanceToLastTrackLocation = trackPoint.distanceToPrevious(lastStoredTrackPoint);
         if (distanceToLastTrackLocation != null) {
             if (distanceToLastTrackLocation.greaterThan(maxRecordingDistance)) {
-                insertTrackPointIfNewer(trackId, lastTrackPoint);
-
                 trackPoint.setType(TrackPoint.Type.SEGMENT_START_AUTOMATIC);
                 insertTrackPoint(trackId, trackPoint);
-
-                isIdle = false;
-
-                lastTrackPoint = trackPoint;
-                return;
+                return true;
             }
 
-            if (trackPoint.hasSensorData() || distanceToLastTrackLocation.greaterOrEqualThan(recordingDistanceInterval)) {
-                insertTrackPointIfNewer(trackId, lastTrackPoint);
-
+            if (trackPoint.hasSensorData() || (distanceToLastTrackLocation.greaterOrEqualThan(recordingDistanceInterval) && trackPoint.isMoving())) {
                 insertTrackPoint(trackId, trackPoint);
-
-                isIdle = false;
-
-                lastTrackPoint = trackPoint;
-                return;
+                return true;
             }
-        }
-
-        if (!isIdle && !trackPoint.isMoving()) {
-            insertTrackPointIfNewer(trackId, lastTrackPoint);
-
-            insertTrackPoint(trackId, trackPoint);
-
-            isIdle = true;
-
-            lastTrackPoint = trackPoint;
-            return;
-        }
-
-        if (isIdle && trackPoint.isMoving()) {
-            insertTrackPointIfNewer(trackId, lastTrackPoint);
-
-            insertTrackPoint(trackId, trackPoint);
-
-            isIdle = false;
-
-            lastTrackPoint = trackPoint;
-            return;
         }
 
         Log.d(TAG, "Not recording TrackPoint, idle");
         lastTrackPoint = trackPoint;
-    }
-
-    Track getTrack() {
-        return contentProviderUtils.getTrack(trackId);
-    }
-
-    //Functionality that uses this method should happen here.
-    @Deprecated
-    TrackStatisticsUpdater getTrackStatisticsUpdater() {
-        return new TrackStatisticsUpdater(trackStatisticsUpdater);
+        return false;
     }
 
     TrackStatistics getTrackStatistics() {
         return trackStatisticsUpdater.getTrackStatistics();
     }
 
-    /**
-     * Gets the last valid track point in the current segment.
-     *
-     * @param trackId the track id
-     * @return the location or null
-     */
-    @Deprecated
-    //Use lastValidTrackPoint
-    private TrackPoint getLastValidTrackPointInCurrentSegment(Track.Id trackId) {
-        if (!currentSegmentHasTrackPoint()) {
-            return null;
-        }
-        return contentProviderUtils.getLastValidTrackPoint(trackId);
-    }
-
-    private boolean currentSegmentHasTrackPoint() {
-        return lastTrackPoint != null;
-    }
-
-    /**
-     * Inserts a trackPoint if this trackPoint is different than lastValidTrackPoint.
-     */
-    private void insertTrackPointIfNewer(@NonNull Track.Id trackId, @NonNull TrackPoint trackPoint) {
-        TrackPoint lastValidTrackPoint = getLastValidTrackPointInCurrentSegment(trackId);
-        if (lastValidTrackPoint != null && trackPoint.getTime().equals(lastValidTrackPoint.getTime())) {
-            // Do not insert if inserted already
-            Log.w(TAG, "Ignore insertTrackPoint. trackPoint time same as last valid trackId point time.");
-            return;
-        }
-
-        insertTrackPoint(trackId, trackPoint);
-    }
-
     private void insertTrackPoint(@NonNull Track.Id trackId, @NonNull TrackPoint trackPoint) {
+        if (lastTrackPoint != null) {
+            if (lastStoredTrackPoint != null && lastTrackPoint.getTime().equals(lastStoredTrackPoint.getTime())) {
+                // Do not insert if inserted already
+                Log.w(TAG, "Ignore insertTrackPoint. trackPoint time same as last valid trackId point time.");
+            } else {
+                insertTrackPointHelper(trackId, lastTrackPoint);
+                // Remove the sensorDistance from trackPoint that is already going  be stored with lastTrackPoint.
+                trackPoint.minusCumulativeSensorData(lastTrackPoint);
+            }
+            lastTrackPoint = null;
+        }
+
+        insertTrackPointHelper(trackId, trackPoint);
+    }
+
+    private void insertTrackPointHelper(@NonNull Track.Id trackId, @NonNull TrackPoint trackPoint) {
         try {
             contentProviderUtils.insertTrackPoint(trackPoint, trackId);
             trackStatisticsUpdater.addTrackPoint(trackPoint, recordingDistanceInterval);
 
             contentProviderUtils.updateTrackStatistics(trackId, trackStatisticsUpdater.getTrackStatistics());
+            lastStoredTrackPoint = trackPoint;
         } catch (SQLiteException e) {
             /*
              * Insert failed, most likely because of SqlLite error code 5 (SQLite_BUSY).

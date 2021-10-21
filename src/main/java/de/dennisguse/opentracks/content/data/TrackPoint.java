@@ -91,7 +91,7 @@ public class TrackPoint {
     private Type type;
 
     private Float heartRate_bpm = null;
-    private Float cyclingCadence_rpm = null;
+    private Float cadence_rpm = null;
     private Float power = null;
     private Float altitudeGain_m = null;
     private Float altitudeLoss_m = null;
@@ -349,8 +349,21 @@ public class TrackPoint {
         return this;
     }
 
+    public TrackPoint minusCumulativeSensorData(@NonNull TrackPoint lastTrackPoint) {
+        if (hasSensorDistance() && lastTrackPoint.hasSensorDistance()) {
+            sensorDistance = sensorDistance.minus(lastTrackPoint.getSensorDistance());
+        }
+        if (hasAltitudeGain() && lastTrackPoint.hasAltitudeGain()) {
+            altitudeGain_m -= lastTrackPoint.altitudeGain_m;
+        }
+        if (hasAltitudeLoss() && lastTrackPoint.hasAltitudeLoss()) {
+            altitudeLoss_m -= lastTrackPoint.altitudeLoss_m;
+        }
+        return this;
+    }
+
     public boolean hasSensorData() {
-        return hasHeartRate() || hasCyclingCadence() || hasPower();
+        return hasHeartRate() || hasCadence() || hasPower();
     }
 
     public boolean hasHeartRate() {
@@ -366,16 +379,16 @@ public class TrackPoint {
         return this;
     }
 
-    public boolean hasCyclingCadence() {
-        return cyclingCadence_rpm != null;
+    public boolean hasCadence() {
+        return cadence_rpm != null;
     }
 
-    public float getCyclingCadence_rpm() {
-        return cyclingCadence_rpm;
+    public float getCadence_rpm() {
+        return cadence_rpm;
     }
 
-    public TrackPoint setCyclingCadence_rpm(Float cyclingCadence_rpm) {
-        this.cyclingCadence_rpm = cyclingCadence_rpm;
+    public TrackPoint setCadence_rpm(Float cadence_rpm) {
+        this.cadence_rpm = cadence_rpm;
         return this;
     }
 
@@ -396,15 +409,17 @@ public class TrackPoint {
     @Override
     public String toString() {
         String result = "time=" + getTime() + " (type=" + getType() + ")";
-        if (!hasLocation()) {
-            return result;
+        if (hasLocation()) {
+            result += ": lat=" + getLatitude() + " lng=" + getLongitude();
         }
-        result += ": lat=" + getLatitude() + " lng=" + getLongitude();
-        if (!hasHorizontalAccuracy()) {
-            return result;
+        if (hasHorizontalAccuracy()) {
+            result += " acc=" + getHorizontalAccuracy();
+        }
+        if (hasSensorDistance()) {
+            result += " distance=" + getSensorDistance();
         }
 
-        return result + " acc=" + getHorizontalAccuracy();
+        return result;
     }
 
     public static class Id {
