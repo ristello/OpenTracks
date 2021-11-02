@@ -119,8 +119,6 @@ public class TrackRecordingService extends Service implements TrackPointCreator.
     // The following variables are setFrequency when recording:
     private WakeLock wakeLock;
 
-    private final Binder binder = new Binder();
-
     private TrackPointCreator trackPointCreator; //TODO Move to TrackRecordingManager?
 
     private RecordingStatus recordingStatus;
@@ -156,7 +154,7 @@ public class TrackRecordingService extends Service implements TrackPointCreator.
 
     @Override
     public Binder onBind(Intent intent) {
-        return binder;
+        return new Binder();
     }
 
     @Override
