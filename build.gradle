@@ -42,6 +42,7 @@ android {
 
     buildFeatures {
         viewBinding = true
+        dataBinding = true
     }
 
     aaptOptions {
@@ -79,6 +80,7 @@ android {
             versionNameSuffix "-debug"
         }
 
+        /*
         nightly {
             signingConfig signingConfigs.nightly
             applicationIdSuffix ".nightly"
@@ -93,6 +95,7 @@ android {
             applicationIdSuffix ".playstore"
             versionNameSuffix "-PlayStore"
         }
+         */
     }
 
     applicationVariants.all { variant ->
